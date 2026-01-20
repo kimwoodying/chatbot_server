@@ -1,109 +1,83 @@
-🚀 chatbot_server — Django 챗봇 서버 (GCP VM)
+# 🚀 chatbot_server
+### Django 기반 병원 챗봇 서버 (GCP VM 배포)
 
-GCP VM에 직접 배포한 운영용 Django 챗봇 서버
+> GCP VM에 직접 배포하여 운영 중인 **Django + LLM(RAG)** 기반 챗봇 서버입니다.  
+> 병원 안내, 예약 조회, 증상 기반 응답 등을 제공하며, 내부 시스템과 연동되는 구조로 설계되었습니다.
 
-배포 방식: GCP VM 수동 배포 (systemd)
+---
 
-서버 IP: 34.42.223.43
+## 📌 서비스 개요
 
-Django 포트: 8001
+- **배포 환경**: Google Cloud Platform (VM)
+- **서버 주소**: `34.42.223.43`
+- **Backend**: Django (Gunicorn)
+- **LLM**: OpenAI / Groq
+- **Vector DB**: FAISS
+- **Database**: MySQL (병원 DB 연동)
+- **접근 방식**: REST API
 
-외부 공개 포트: 80 / 443 / 8001
+---
 
-📌 전체 아키텍처
-GCP VM (34.42.223.43)
+## 🧱 시스템 아키텍처
+
+GCP VM
 │
-├── Nginx (80 / 443)
-├── Django 챗봇 서버 (8001)   ← chatbot_server
-├── FastAPI (8000)            (내부 통신)
-├── AI 모델 서버 (5001)       (내부 통신)
-├── Qdrant (6333)             (내부 통신)
-└── MySQL (3306)              (내부 통신)
+├─ Nginx (80 / 443)
+├─ Django Chatbot (8001)
+├─ FastAPI (8000, internal)
+├─ AI Model Server (5001, internal)
+├─ Qdrant (6333, internal)
+└─ MySQL (3306, internal)
 
-⚡ 빠른 배포 (6단계)
-# 1. 프로젝트 업로드 (로컬 → VM)
-scp -r chatbot_server ubuntu@34.42.223.43:/home/ubuntu/
+---
 
-# 2. VM 접속
-ssh ubuntu@34.42.223.43
+## 🎯 프로젝트 목적
 
-# 3. 가상환경 생성 및 패키지 설치
-cd /home/ubuntu/chatbot_server
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+병원 이용자가 자주 문의하는 반복적인 질문(진료과 안내, 위치, 전화번호, 예약 상태 등)을  
+자동으로 처리하고, 의료진/시스템 부담을 줄이기 위해 챗봇 서버를 설계·구현했습니다.
 
-# 4. 환경변수 설정 (.env)
-# /home/ubuntu/chatbot_server/.env 위치에 생성
+- 병원 운영 정보는 **정확한 데이터 기반 응답**
+- 증상 관련 문의는 **의학 진단을 대체하지 않는 선에서 안내**
+- 예약/대기 조회 등은 **내부 DB 및 API와 연동**
 
-# 5. Django 초기 설정
-python manage.py migrate
-python manage.py collectstatic --noinput
+---
 
-# 6. 서버 실행
-gunicorn -w 4 -b 0.0.0.0:8001 chat_django.wsgi:application
+## 🧠 주요 기능
 
-🔐 환경 변수 (.env)
+- 병원 정보 안내 (진료과, 위치, 연락처, 운영 시간)
+- 증상 기반 안내 + 추천 진료과 응답
+- 예약 조회 및 상태 확인 (병원 DB 연동)
+- FAISS 기반 문서 검색(RAG)으로 정확도 향상
+- LLM 응답 캐싱으로 응답 속도 및 비용 절감
+- 관리자 페이지를 통한 로그/캐시 관리
 
-📍 위치
+---
 
-/home/ubuntu/chatbot_server/.env
+## 🛠 기술 스택 선택 이유
 
-# =====================
-# Django 기본 설정
-# =====================
-DEBUG=False
-SECRET_KEY=change-me
-ALLOWED_HOSTS=34.42.223.43
+- **Django**: 인증, 관리자 페이지, ORM 활용에 적합
+- **Gunicorn**: 안정적인 WSGI 서버 구성
+- **FAISS**: 빠른 벡터 검색이 필요한 병원 문서 RAG에 적합
+- **MySQL**: 병원 기존 시스템과의 호환성
+- **GCP VM**: 내부 서비스와 동일 네트워크 구성 가능
 
-# 보안 설정
-SECURE_SSL_REDIRECT=true
-SESSION_COOKIE_SECURE=true
-CSRF_COOKIE_SECURE=true
-SECURE_HSTS_SECONDS=31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS=true
-SECURE_HSTS_PRELOAD=true
+---
 
-# CORS
-CORS_ALLOW_ALL_ORIGINS=false
-CORS_ALLOWED_ORIGINS=http://34.42.223.43,https://34.42.223.43
+## 🔄 요청 처리 흐름
 
-# =====================
-# 캐시 설정
-# =====================
-CACHE_CLEAR_ENABLED=true
-CACHE_CLEAR_HOUR=4
-CACHE_CLEAR_MINUTE=0
+1. 사용자가 챗봇 API로 메시지 전송
+2. 의도 분류 (정보 조회 / 증상 문의 / 예약 관련)
+3. 필요 시 DB 또는 내부 API 조회
+4. FAISS 기반 문서 검색(RAG)
+5. LLM을 통한 응답 생성
+6. 결과 캐싱 후 사용자에게 응답
 
-# =====================
-# LLM / RAG
-# =====================
-PRIMARY_LLM=openai
-OPENAI_API_KEY=YOUR_OPENAI_KEY
-OPENAI_MODEL=gpt-4o-mini
+---
 
-GROQ_API_KEY=YOUR_GROQ_KEY
-EMBEDDING_MODEL=jhgan/ko-sroberta-multitask
+## 🚧 한계 및 향후 개선
 
-FAISS_INDEX_PATH=/home/ubuntu/chatbot_server/chatbot/data/faiss.index
-METADATA_PATH=/home/ubuntu/chatbot_server/chatbot/data/metadata.json
-
-# =====================
-# 외부 API
-# =====================
-HOLIDAY_API_KEY=YOUR_HOLIDAY_API_KEY
-
-# =====================
-# DB 설정
-# =====================
-USE_SQLITE=false
-
-MYSQL_HOST=34.42.223.43
-MYSQL_PORT=3306
-MYSQL_DATABASE=hospital_db
-MYSQL_USER=acorn
-MYSQL_PASSWORD=YOUR_DB_PASSWORD
-
-# 병원 DB alias (툴 조회용)
-HOSPITAL_DATABASE_URL=mysql://acorn:YOUR_DB_PASSWORD@34.42.223.43:3306/hospital_db
-HOSPITAL_RESERVATION_TABLE=patients_appointment
+- 현재는 REST API 기반 (WebSocket 미적용)
+- 실시간 채팅 기능 도입 시 ASGI 전환 예정
+- 응답 품질 평가 자동화 필요
+- 의료진 전용 대시보드 연동 계획
+- LLM 모델 교체/추가에 유연한 구조로 확장 예정
