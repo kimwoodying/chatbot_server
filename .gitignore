@@ -1,12 +1,15 @@
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
-venv/
-ENV/
 build/
 develop-eggs/
 dist/
@@ -24,25 +27,51 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# Django
-*.log
-db.sqlite3
-db.sqlite3-journal
-/media
-/static
-
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
 
-# Environment
+# Environment files
 .env
 .env.local
+.env.*.local
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
 
 # Cache
-.cache
+.cache/
 cache_clear_state.json
+
+# Test coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# IDE
+.venv
+*.code-workspace
