@@ -1,0 +1,11 @@
+[Unit]
+Description=Django Chatbot Cache Clear
+After=network.target
+
+[Service]
+Type=oneshot
+User=your-user
+WorkingDirectory=/home/user/project/chatbot_server
+EnvironmentFile=/home/user/project/chatbot_server/.env
+Environment="PATH=/home/user/project/chatbot_server/venv/bin"
+ExecStart=/home/user/project/chatbot_server/venv/bin/python manage.py clear_chat_cache

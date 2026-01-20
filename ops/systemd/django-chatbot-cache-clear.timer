@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Django Chatbot cache clear daily
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

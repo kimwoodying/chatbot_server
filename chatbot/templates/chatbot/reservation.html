@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>진료예약</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap");
+
+      :root {
+        --bg: #f5f6f8;
+        --card: #ffffff;
+        --ink: #1f2430;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --accent: #f2d52b;
+        --accent-strong: #efc71d;
+        --shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+
+      .page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 38px 22px 60px;
+      }
+
+      .header {
+        margin-bottom: 22px;
+      }
+
+      .title {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .subtitle {
+        margin-top: 6px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      .card {
+        background: var(--card);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 240px;
+      }
+
+      .panel-title {
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .search {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 9px 12px;
+        font-size: 13px;
+      }
+
+      .list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .list--tall {
+        max-height: 280px;
+      }
+
+      .item {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px 12px;
+        text-align: left;
+        background: #ffffff;
+        cursor: pointer;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .item:hover {
+        border-color: #d7dbe2;
+      }
+
+      .item.active {
+        border-color: var(--accent-strong);
+        background: #fffbea;
+        box-shadow: 0 10px 22px rgba(242, 213, 43, 0.15);
+      }
+
+      .item .label {
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .item .desc {
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+
+      .empty {
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px dashed var(--line);
+        font-size: 12px;
+        color: var(--muted);
+        background: #fafbfc;
+      }
+
+      .fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .field label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .field input {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 9px 12px;
+        font-size: 13px;
+      }
+
+      .summary {
+        border-top: 1px dashed var(--line);
+        padding-top: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 16px;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 13px;
+      }
+
+      .summary span {
+        font-weight: 600;
+      }
+
+      .source {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 900px) {
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .fields {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <div class="title">진료예약</div>
+        <div class="subtitle">한 화면에서 진료과, 의료진, 날짜/시간을 선택합니다.</div>
+      </header>
+
+      <section class="card">
+        <div class="row">
+          <div class="panel">
+            <div class="panel-title">진료과 선택</div>
+            <input class="search" id="dept-search" type="text" placeholder="진료과 검색" />
+            <div class="list list--tall" id="dept-list"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">의료진 선택</div>
+            <input class="search" id="doctor-search" type="text" placeholder="의료진 검색" />
+            <div class="list list--tall" id="doctor-list"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">희망 일정</div>
+          <div class="fields">
+            <div class="field">
+              <label for="date-input">날짜</label>
+              <input id="date-input" type="date" />
+            </div>
+            <div class="field">
+              <label for="time-input">시간</label>
+              <input id="time-input" type="time" step="1800" />
+            </div>
+          </div>
+        </div>
+
+        <div class="summary">
+          <div>
+            선택 요약:
+            <span id="summary-dept">-</span>
+            /
+            <span id="summary-doctor">-</span>
+            /
+            <span id="summary-date">-</span>
+            <span id="summary-time">-</span>
+          </div>
+          <div class="source" id="data-source"></div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const state = {
+        departments: [],
+        doctors: [],
+        selectedDept: "",
+        selectedDoctor: "",
+      };
+
+      const deptList = document.getElementById("dept-list");
+      const doctorList = document.getElementById("doctor-list");
+      const deptSearch = document.getElementById("dept-search");
+      const doctorSearch = document.getElementById("doctor-search");
+      const summaryDept = document.getElementById("summary-dept");
+      const summaryDoctor = document.getElementById("summary-doctor");
+      const summaryDate = document.getElementById("summary-date");
+      const summaryTime = document.getElementById("summary-time");
+      const dateInput = document.getElementById("date-input");
+      const timeInput = document.getElementById("time-input");
+      const dataSource = document.getElementById("data-source");
+
+      function setEmpty(container, message) {
+        container.innerHTML = "";
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = message;
+        container.appendChild(empty);
+      }
+
+      function updateSummary() {
+        summaryDept.textContent = state.selectedDept || "-";
+        summaryDoctor.textContent = state.selectedDoctor || "-";
+        summaryDate.textContent = dateInput.value || "-";
+        summaryTime.textContent = timeInput.value || "-";
+      }
+
+      function renderDepartments(filterText) {
+        const keyword = (filterText || "").trim().toLowerCase();
+        const items = state.departments.filter((dept) =>
+          dept.name.toLowerCase().includes(keyword)
+        );
+        if (!items.length) {
+          setEmpty(deptList, "표시할 진료과가 없습니다.");
+          return;
+        }
+        deptList.innerHTML = "";
+        items.forEach((dept) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "item";
+          if (state.selectedDept === dept.name) {
+            button.classList.add("active");
+          }
+          const label = document.createElement("div");
+          label.className = "label";
+          label.textContent = dept.name;
+          const desc = document.createElement("div");
+          desc.className = "desc";
+          desc.textContent = dept.description || "진료과 설명이 없습니다.";
+          button.appendChild(label);
+          button.appendChild(desc);
+          button.addEventListener("click", () => {
+            state.selectedDept = dept.name;
+            state.selectedDoctor = "";
+            renderDepartments(deptSearch.value);
+            renderDoctors(doctorSearch.value);
+            updateSummary();
+          });
+          deptList.appendChild(button);
+        });
+      }
+
+      function renderDoctors(filterText) {
+        if (!state.selectedDept) {
+          setEmpty(doctorList, "진료과를 먼저 선택해 주세요.");
+          return;
+        }
+        const keyword = (filterText || "").trim().toLowerCase();
+        const items = state.doctors.filter(
+          (doctor) =>
+            doctor.department === state.selectedDept &&
+            doctor.name.toLowerCase().includes(keyword)
+        );
+        if (!items.length) {
+          setEmpty(doctorList, "표시할 의료진이 없습니다.");
+          return;
+        }
+        doctorList.innerHTML = "";
+        items.forEach((doctor) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "item";
+          if (state.selectedDoctor === doctor.name) {
+            button.classList.add("active");
+          }
+          const label = document.createElement("div");
+          label.className = "label";
+          label.textContent = doctor.name;
+          const desc = document.createElement("div");
+          desc.className = "desc";
+          const detail = [doctor.title, doctor.specialty].filter(Boolean).join(" · ");
+          desc.textContent = detail || "의료진 정보가 없습니다.";
+          button.appendChild(label);
+          button.appendChild(desc);
+          button.addEventListener("click", () => {
+            state.selectedDoctor = doctor.name;
+            renderDoctors(doctorSearch.value);
+            updateSummary();
+          });
+          doctorList.appendChild(button);
+        });
+      }
+
+      function loadOptions() {
+        fetch("/api/reservation/options/")
+          .then((response) => response.json())
+          .then((payload) => {
+            state.departments = payload.departments || [];
+            state.doctors = payload.doctors || [];
+            renderDepartments("");
+            renderDoctors("");
+            updateSummary();
+            if (payload.source === "fallback") {
+              dataSource.textContent = "부서 데이터는 기본 목록을 사용 중입니다.";
+            } else {
+              dataSource.textContent = "부서/의료진 데이터는 DB에서 연동되었습니다.";
+            }
+          })
+          .catch(() => {
+            setEmpty(deptList, "데이터를 불러오지 못했습니다.");
+            setEmpty(doctorList, "데이터를 불러오지 못했습니다.");
+            dataSource.textContent = "데이터 연동에 실패했습니다.";
+          });
+      }
+
+      deptSearch.addEventListener("input", (event) => {
+        renderDepartments(event.target.value);
+      });
+
+      doctorSearch.addEventListener("input", (event) => {
+        renderDoctors(event.target.value);
+      });
+
+      dateInput.addEventListener("change", updateSummary);
+      timeInput.addEventListener("change", updateSummary);
+
+      loadOptions();
+    </script>
+  </body>
+</html>
